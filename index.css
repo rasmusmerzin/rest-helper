@@ -1,0 +1,109 @@
+html {
+  --submit-color: #29c;
+  --error-color: #a22;
+  --disabled-color: #aaa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  max-width: 100ex;
+  width: 90%;
+  font-family: sans-serif;
+  margin: 1rem auto;
+  background: #ddd;
+}
+
+h1 {
+  text-align: center;
+}
+
+select,
+option {
+  cursor: pointer;
+}
+
+textarea {
+  resize: none;
+  height: 20rem;
+}
+
+textarea,
+input {
+  font-family: monospace;
+  width: 100%;
+}
+
+textarea,
+input,
+button {
+  margin: 0;
+  border: 1px solid #000;
+  border-radius: 0.2rem;
+}
+
+button {
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+
+  color: #fff;
+  background: var(--submit-color);
+  border-color: var(--submit-color);
+}
+
+button.big {
+  font-size: 1.2rem;
+}
+
+button:hover {
+  color: var(--submit-color);
+  background: #fff;
+  border-color: var(--submit-color);
+}
+
+textarea.error,
+input.error {
+  border-width: 2px;
+  border-color: var(--error-color);
+}
+
+*:disabled {
+  color: var(--disabled-color);
+}
+
+textarea:disabled,
+input:disabled,
+button:disabled {
+  border-color: var(--disabled-color);
+}
+
+button:disabled {
+  color: #fff;
+  background: var(--disabled-color);
+}
+
+button.clear {
+  background: none;
+  border: none;
+  color: #000;
+}
+
+button.clear:hover {
+  text-shadow: 0 0 0.2rem #000;
+}
+
+.italic {
+  font-style: italic;
+}
+
+div {
+  margin: 1rem 0;
+}
+
+label {
+  margin: 0.2rem 0;
+  display: inline-block;
+  margin-right: 1ex;
+}
