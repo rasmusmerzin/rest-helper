@@ -48,6 +48,7 @@ requestType.addEventListener("change", () =>
 
 const postBody = elem("textarea", {
   innerHTML: localStorage.getItem("postBody") || "{\n\n}",
+  spellcheck: false,
   disabled: requestType.value !== "post",
 });
 postBody.addEventListener("change", () =>
@@ -55,7 +56,7 @@ postBody.addEventListener("change", () =>
 );
 const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
-const response = elem("textarea", { readOnly: true });
+const response = elem("textarea", { readOnly: true, spellcheck: false });
 const responsePretty = elem("button", {
   className: "clear",
   innerHTML: "PRETTIER",
@@ -114,7 +115,12 @@ postBody.addEventListener("blur", () => {
     try {
       obj = JSON.parse(postBody.value);
     } catch (_) {
-      obj = JSON.parse(postBody.value.replace(/\s*([^"\n]*):/, '"$1":'));
+      obj = JSON.parse(
+        postBody.value
+          .replace(/\n\s*([^"\n]*):/g, '\n"$1":')
+          .replace(/:\s*'([^"\n]*[^,"\n])'(,?)\s*(\n|})/g, ': "$1"$2$3')
+          .replace(/:\s*([^"\n]*\w[^"\n]*[^,"\n])(,?)\s*(\n|})/g, ': "$1"$2$3')
+      );
     }
     if (obj) {
       postBody.value = JSON.stringify(obj, null, 2);
