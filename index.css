@@ -22,7 +22,7 @@ textarea {
 body {
   max-width: 80ex;
   width: 90%;
-  margin: 1rem auto;
+  margin: 2rem auto 3rem;
   background: #ddd;
 }
 
@@ -36,18 +36,19 @@ option {
 }
 
 textarea {
-  resize: none;
-  height: 20rem;
+  resize: vertical;
+  height: 10rem;
 }
 
 textarea,
-input {
+input[type="text"] {
   width: 100%;
 }
 
 textarea,
 input,
-button {
+button,
+option {
   margin: 0;
   border: 1px solid #000;
   border-radius: 0.2rem;
@@ -94,6 +95,7 @@ button:disabled {
 }
 
 button.clear {
+  padding: 0;
   background: none;
   border: none;
   color: #000;

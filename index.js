@@ -21,17 +21,35 @@ const elem = (type, props, parent) => {
   return node;
 };
 
+const text = (content, type = "label", parent) =>
+  elem(type, { innerHTML: content }, parent);
+const group = (children, type = "div", parent) =>
+  elem(type, { _: children }, parent);
+const root = (children) => {
+  for (const child of children) document.body.appendChild(child);
+};
+
+const keepValue = (node, key, init, prop = "value") => {
+  const initVal = localStorage.getItem(key);
+  if (initVal != undefined) {
+    node[prop] = JSON.parse(initVal);
+  } else if (init != undefined) {
+    node[prop] = init;
+  }
+  node.addEventListener("input", () =>
+    localStorage.setItem(key, JSON.stringify(node[prop]))
+  );
+};
+
 const now = () => new Date().getTime();
+
+//
 
 const targetUrl = elem("input", {
   type: "text",
-  value: localStorage.getItem("targetUrl"),
 });
-targetUrl.addEventListener("change", () =>
-  localStorage.setItem("targetUrl", targetUrl.value)
-);
+keepValue(targetUrl, "targetUrl");
 
-const reqTypeInitVal = localStorage.getItem("requestType");
 const requestType = elem("select", {
   _: [
     elem("option", {
@@ -43,17 +61,36 @@ const requestType = elem("select", {
       innerHTML: "POST",
     }),
   ],
-  ...(reqTypeInitVal ? { value: reqTypeInitVal } : {}),
 });
-requestType.addEventListener("change", () =>
-  localStorage.setItem("requestType", requestType.value)
-);
+keepValue(requestType, "requestType");
+
+const requestCredentials = elem("select", {
+  _: [
+    elem("option", {
+      value: "omit",
+      innerHTML: "omit",
+    }),
+    elem("option", {
+      value: "same-origin",
+      innerHTML: "same-origin",
+    }),
+    elem("option", {
+      value: "include",
+      innerHTML: "include",
+    }),
+  ],
+});
+keepValue(requestCredentials, "requestCredentials");
 
 const postBody = elem("textarea", {
-  innerHTML: localStorage.getItem("postBody") || "{\n\n}",
   spellcheck: false,
   disabled: requestType.value !== "post",
 });
+keepValue(postBody, "postBody");
+
+const postBodyFormat = elem("input", { type: "checkbox" });
+keepValue(postBodyFormat, "postBodyFormat", true, "checked");
+
 const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
 const response = elem("textarea", { readOnly: true, spellcheck: false });
@@ -61,48 +98,16 @@ const responsePretty = elem("button", {
   className: "clear",
   innerHTML: "PRETTIER",
   style: {
-    margin: ".4rem .2rem",
     visibility: "hidden",
     position: "absolute",
-    right: 0,
-    bottom: 0,
+    right: "1.6rem",
+    bottom: ".2rem",
   },
   onclick: () => (response.innerHTML = formatted),
 });
 
 const sendButton = elem("button", { className: "big", innerHTML: "SEND" });
 const sendMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
-
-elem(
-  "div",
-  {
-    _: [
-      elem("div", {
-        _: [elem("label", { innerHTML: "Request URL:" }), targetUrl],
-      }),
-      elem("div", {
-        _: [elem("label", { innerHTML: "Request Type:" }), requestType],
-      }),
-      elem("div", {
-        _: [
-          elem("label", { innerHTML: "Post Body:" }),
-          postBody,
-          postBodyMessage,
-        ],
-      }),
-      elem("div", {
-        style: { position: "relative" },
-        _: [
-          elem("label", { innerHTML: "Response:" }),
-          response,
-          responsePretty,
-        ],
-      }),
-      elem("center", { _: [sendMessage, sendButton] }),
-    ],
-  },
-  document.body
-);
 
 requestType.addEventListener(
   "change",
@@ -137,34 +142,41 @@ postBody.addEventListener("keydown", (e) => {
       postBody.selectionStart = postBody.selectionEnd = start + amount;
       break;
   }
-  localStorage.setItem("postBody", postBody.value);
 });
 
-postBody.addEventListener("blur", () => {
+const formatBody = () => {
   try {
     let obj;
     try {
       obj = JSON.parse(postBody.value);
-    } catch (_) {
-      obj = JSON.parse(
-        postBody.value
-          .replace(/\n\s*([^"\n]*):/g, '\n"$1":')
-          .replace(/:\s*'([^"\n]*[^,"\n])'(,?)\s*(\n|})/g, ': "$1"$2$3')
-          .replace(/:\s*([^"\n]*\w[^"\n]*[^,"\n])(,?)\s*(\n|})/g, ': "$1"$2$3')
-          .replace(/,\s*}\s*$/, "}")
-      );
+    } catch (err) {
+      if (postBodyFormat.checked)
+        obj = JSON.parse(
+          postBody.value
+            .replace(/\n\s*([^"\n]*):/g, '\n"$1":')
+            .replace(/:\s*'([^"\n]*[^,"\n])'(,?)\s*(\n|})/g, ': "$1"$2$3')
+            .replace(
+              /:\s*([^"\n]*\w[^"\n]*[^,"\n])(,?)\s*(\n|})/g,
+              ': "$1"$2$3'
+            )
+            .replace(/,\s*}\s*$/, "}")
+        );
+      else throw err;
     }
-    if (obj) {
+    if (obj && postBodyFormat.checked)
       postBody.value = JSON.stringify(obj, null, tabSize);
-      localStorage.setItem("postBody", postBody.value);
-    }
     postBody.className = "";
     postBodyMessage.innerHTML = "&nbsp;";
   } catch (err) {
     postBody.className = "error";
     postBodyMessage.innerHTML = String(err);
   }
-});
+};
+postBody.addEventListener("blur", formatBody);
+postBodyFormat.addEventListener(
+  "change",
+  () => postBodyFormat.checked && formatBody()
+);
 
 sendButton.onclick = async () => {
   sendButton.disabled = true;
@@ -174,6 +186,7 @@ sendButton.onclick = async () => {
   try {
     const res = await fetch(targetUrl.value, {
       method: requestType.value,
+      credentials: requestCredentials.value,
       ...(requestType.value === "post" ? { body: postBody.value } : {}),
     });
     try {
@@ -197,3 +210,23 @@ sendButton.onclick = async () => {
   }
   sendButton.disabled = false;
 };
+
+root([
+  text("Request", "h2"),
+  group([text("URL"), targetUrl]),
+  group([text("Type"), requestType]),
+  group([text("Credentials"), requestCredentials]),
+  group([
+    text("Body"),
+    text(" Autoformat ", "i"),
+    postBodyFormat,
+    postBody,
+    postBodyMessage,
+  ]),
+  text("Response", "h2"),
+  elem("div", {
+    style: { position: "relative" },
+    _: [text("Content"), response, responsePretty],
+  }),
+  elem("center", { _: [sendMessage, sendButton] }),
+]);
