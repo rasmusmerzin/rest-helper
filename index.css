@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Mono&family=Fira+Sans:ital,wght@0,400;0,700;1,300&display=swap");
+
 html {
   --submit-color: #29c;
   --error-color: #a22;
@@ -5,13 +7,21 @@ html {
 }
 
 * {
+  font-family: "Fira Sans", sans-serif;
   box-sizing: border-box;
 }
 
+code,
+input[type="text"],
+textarea {
+  padding: 0.2rem;
+  line-height: 1.1em;
+  font-family: "Fira Mono", monospace;
+}
+
 body {
-  max-width: 100ex;
+  max-width: 80ex;
   width: 90%;
-  font-family: sans-serif;
   margin: 1rem auto;
   background: #ddd;
 }
@@ -32,7 +42,6 @@ textarea {
 
 textarea,
 input {
-  font-family: monospace;
   width: 100%;
 }
 

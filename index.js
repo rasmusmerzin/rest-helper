@@ -23,7 +23,10 @@ const elem = (type, props, parent) => {
 
 const now = () => new Date().getTime();
 
-const targetUrl = elem("input", { value: localStorage.getItem("targetUrl") });
+const targetUrl = elem("input", {
+  type: "text",
+  value: localStorage.getItem("targetUrl"),
+});
 targetUrl.addEventListener("change", () =>
   localStorage.setItem("targetUrl", targetUrl.value)
 );
@@ -51,9 +54,6 @@ const postBody = elem("textarea", {
   spellcheck: false,
   disabled: requestType.value !== "post",
 });
-postBody.addEventListener("change", () =>
-  localStorage.setItem("postBody", postBody.value)
-);
 const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
 const response = elem("textarea", { readOnly: true, spellcheck: false });
@@ -109,6 +109,37 @@ requestType.addEventListener(
   () => (postBody.disabled = requestType.value !== "post")
 );
 
+const tabSize = 2;
+postBody.addEventListener("keydown", (e) => {
+  const current = postBody.value;
+  const start = postBody.selectionStart,
+    end = postBody.selectionEnd;
+  const left = current.substring(0, start),
+    right = current.substring(end);
+  const rowLeft = String(left.match(/\n[^\n]*$/) || left);
+  const prevRows = left.substring(0, left.length - rowLeft.length) || "";
+  switch (e.key) {
+    case "Backspace":
+      if (rowLeft.length > 0) {
+        e.preventDefault();
+        let amount = 1;
+        if (rowLeft.endsWith(" ".repeat(tabSize)))
+          amount = (rowLeft.length % tabSize) + 1;
+        postBody.value =
+          prevRows + rowLeft.substring(0, rowLeft.length - amount) + right;
+        postBody.selectionStart = postBody.selectionEnd = start - amount;
+      }
+      break;
+    case "Tab":
+      e.preventDefault();
+      const amount = tabSize - ((rowLeft.length - 1) % tabSize);
+      postBody.value = left + " ".repeat(amount) + right;
+      postBody.selectionStart = postBody.selectionEnd = start + amount;
+      break;
+  }
+  localStorage.setItem("postBody", postBody.value);
+});
+
 postBody.addEventListener("blur", () => {
   try {
     let obj;
@@ -120,10 +151,11 @@ postBody.addEventListener("blur", () => {
           .replace(/\n\s*([^"\n]*):/g, '\n"$1":')
           .replace(/:\s*'([^"\n]*[^,"\n])'(,?)\s*(\n|})/g, ': "$1"$2$3')
           .replace(/:\s*([^"\n]*\w[^"\n]*[^,"\n])(,?)\s*(\n|})/g, ': "$1"$2$3')
+          .replace(/,\s*}\s*$/, "}")
       );
     }
     if (obj) {
-      postBody.value = JSON.stringify(obj, null, 2);
+      postBody.value = JSON.stringify(obj, null, tabSize);
       localStorage.setItem("postBody", postBody.value);
     }
     postBody.className = "";
@@ -148,7 +180,7 @@ sendButton.onclick = async () => {
       const txt = await res.text();
       response.innerHTML = txt;
       try {
-        const formatted = JSON.stringify(JSON.parse(txt), null, 2);
+        const formatted = JSON.stringify(JSON.parse(txt), null, tabSize);
         if (formatted !== txt) {
           responsePretty.onclick = () => {
             responsePretty.style.visibility = "hidden";
