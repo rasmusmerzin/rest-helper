@@ -3,7 +3,7 @@ const attachProps = (node, props) => {
     const val = props[key];
     if (
       val &&
-      key === "_" &&
+      key === "children" &&
       typeof val === "object" &&
       val.length !== undefined
     ) {
@@ -24,7 +24,7 @@ const elem = (type, props, parent) => {
 const text = (content, type = "label", parent) =>
   elem(type, { innerHTML: content }, parent);
 const group = (children, type = "div", parent) =>
-  elem(type, { _: children }, parent);
+  elem(type, { children }, parent);
 const root = (children) => {
   for (const child of children) document.body.appendChild(child);
 };
@@ -51,7 +51,7 @@ const targetUrl = elem("input", {
 keepValue(targetUrl, "targetUrl");
 
 const requestType = elem("select", {
-  _: [
+  children: [
     elem("option", {
       value: "get",
       innerHTML: "GET",
@@ -65,7 +65,7 @@ const requestType = elem("select", {
 keepValue(requestType, "requestType");
 
 const requestCredentials = elem("select", {
-  _: [
+  children: [
     elem("option", {
       value: "omit",
       innerHTML: "omit",
@@ -226,7 +226,7 @@ root([
   text("Response", "h2"),
   elem("div", {
     style: { position: "relative" },
-    _: [text("Content"), response, responsePretty],
+    children: [text("Content"), response, responsePretty],
   }),
-  elem("center", { _: [sendMessage, sendButton] }),
+  group([sendMessage, sendButton], "center"),
 ]);
