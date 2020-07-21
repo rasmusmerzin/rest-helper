@@ -1,0 +1,20 @@
+{
+  "name": "rest-helper",
+  "version": "1.0.0",
+  "repository": "https://github.com/rasmusmerzin/rest-helper",
+  "author": "rasmusmerzin <rasmusmerzin@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "parcel-bundler": "^1.12.4",
+    "tyne": "^0.0.1"
+  },
+  "scripts": {
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "browserslist": [
+    "last 3 chrome versions",
+    "last 3 firefox versions",
+    "last 3 safari versions"
+  ]
+}
