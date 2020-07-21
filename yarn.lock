@@ -5050,10 +5050,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-tyne@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/tyne/-/tyne-0.0.1.tgz#14c343706b0bb5c7a0d0390642ad35c49d265c8e"
-  integrity sha512-boTLN946g4rOBYvQYwRyJ8R4obW79tLlClfrD/J0zDsrZAQivc+SbU6tCYOM8Omc+ih+6o/NGrKa5jnabzwAtQ==
+tyne@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/tyne/-/tyne-0.1.0.tgz#52e67eec81839b37107d7e55e4e173463691c459"
+  integrity sha512-E6qjF8WuSY8E+mVgY9PdKzzrcFlmGKK89O3/k9IClMwZ04xbipbafEtioC7ULndDmt0W591+K4eyy1FJXlHulw==
 
 type-check@~0.3.2:
   version "0.3.2"
