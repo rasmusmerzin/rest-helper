@@ -9,6 +9,12 @@ html {
 * {
   font-family: "Fira Sans", sans-serif;
   box-sizing: border-box;
+  line-height: 1.1em;
+}
+
+code {
+  line-height: 1.1rem;
+  font-size: 0.9rem;
 }
 
 code,
@@ -109,7 +115,7 @@ button.clear:hover {
   font-style: italic;
 }
 
-div {
+body > div {
   margin: 1rem 0;
 }
 

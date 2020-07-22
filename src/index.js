@@ -1,6 +1,24 @@
 import { elem, text, group, root, keepValue } from "tyne";
 
 const now = () => new Date().getTime();
+const nowString = (milliseconds) => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, 0);
+  const day = String(date.getDate()).padStart(2, 0);
+  const hour = String(date.getHours()).padStart(2, 0);
+  const minute = String(date.getMinutes()).padStart(2, 0);
+  const second = String(date.getSeconds()).padStart(2, 0);
+  const ms = String(date.getMilliseconds()).padStart(3, 0);
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}${
+    milliseconds ? `.${ms}` : ""
+  }`;
+};
+
+const currentTime = elem("code", {
+  innerHTML: nowString(),
+  style: { display: "block", textAlign: "center" },
+});
 
 const targetUrl = elem("input", {
   type: "text",
@@ -50,6 +68,10 @@ keepValue(postBodyFormat, "postBodyFormat", true, "checked");
 
 const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
+const sentAt = elem("code");
+const recievedAt = elem("code");
+const responseSent = elem("code");
+const responseStatus = elem("code");
 const response = elem("textarea", { readOnly: true, spellcheck: false });
 const responsePretty = elem("button", {
   className: "clear",
@@ -58,7 +80,8 @@ const responsePretty = elem("button", {
     visibility: "hidden",
     position: "absolute",
     right: "1.6rem",
-    bottom: ".2rem",
+    lineHeight: 0,
+    bottom: ".8rem",
   },
   onclick: () => (response.innerHTML = formatted),
 });
@@ -139,13 +162,18 @@ sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
   response.innerHTML = "";
+  responseStatus.innerHTML = "";
   responsePretty.style.visibility = "hidden";
+  sentAt.innerHTML = nowString(1);
+  recievedAt.innerHTML = "";
   try {
     const res = await fetch(targetUrl.value, {
       method: requestType.value,
       credentials: requestCredentials.value,
       ...(requestType.value === "post" ? { body: postBody.value } : {}),
     });
+    recievedAt.innerHTML = nowString(1);
+    responseStatus.innerHTML = res.status;
     try {
       const txt = await res.text();
       response.innerHTML = txt;
@@ -168,7 +196,10 @@ sendButton.onclick = async () => {
   sendButton.disabled = false;
 };
 
+setInterval(() => (currentTime.innerHTML = nowString()), 1000);
+
 root([
+  currentTime,
   text("Request", "h2"),
   group([text("URL"), targetUrl]),
   group([text("Type"), requestType]),
@@ -181,6 +212,21 @@ root([
     postBodyMessage,
   ]),
   text("Response", "h2"),
+  elem("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "auto 1fr",
+      alignItems: "center",
+    },
+    children: [
+      text("Sent"),
+      sentAt,
+      text("Recieved"),
+      recievedAt,
+      text("Status"),
+      responseStatus,
+    ],
+  }),
   elem("div", {
     style: { position: "relative" },
     children: [text("Content"), response, responsePretty],
