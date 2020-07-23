@@ -1,4 +1,4 @@
-import { elem, text, group, root, keepValue } from "tyne";
+import { elem, text, group, root, keepValue, saveValue } from "tyne";
 
 const now = () => new Date().getTime();
 const nowString = (milliseconds) => {
@@ -17,7 +17,15 @@ const nowString = (milliseconds) => {
 
 const currentTime = elem("code", {
   innerHTML: nowString(),
-  style: { display: "block", textAlign: "center" },
+  style: {
+    background: "#fff",
+    textAlign: "center",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    zIndex: 9,
+  },
 });
 
 const targetUrl = elem("input", {
@@ -72,19 +80,10 @@ const sentAt = elem("code");
 const recievedAt = elem("code");
 const responseSent = elem("code");
 const responseStatus = elem("code");
+
 const response = elem("textarea", { readOnly: true, spellcheck: false });
-const responsePretty = elem("button", {
-  className: "clear",
-  innerHTML: "PRETTIER",
-  style: {
-    visibility: "hidden",
-    position: "absolute",
-    right: "1.6rem",
-    lineHeight: 0,
-    bottom: ".8rem",
-  },
-  onclick: () => (response.innerHTML = formatted),
-});
+const responseFormat = elem("input", { type: "checkbox" });
+keepValue(responseFormat, "responseFormat", false, "checked");
 
 const sendButton = elem("button", { className: "big", innerHTML: "SEND" });
 const sendMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
@@ -113,6 +112,7 @@ postBody.addEventListener("keydown", (e) => {
         postBody.value =
           prevRows + rowLeft.substring(0, rowLeft.length - amount) + right;
         postBody.selectionStart = postBody.selectionEnd = start - amount;
+        saveValue(postBody, "postBody");
       }
       break;
     case "Tab":
@@ -120,6 +120,7 @@ postBody.addEventListener("keydown", (e) => {
       const amount = tabSize - ((rowLeft.length - 1) % tabSize);
       postBody.value = left + " ".repeat(amount) + right;
       postBody.selectionStart = postBody.selectionEnd = start + amount;
+      saveValue(postBody, "postBody");
       break;
   }
 });
@@ -143,8 +144,10 @@ const formatBody = () => {
         );
       else throw err;
     }
-    if (obj && postBodyFormat.checked)
+    if (obj && postBodyFormat.checked) {
       postBody.value = JSON.stringify(obj, null, tabSize);
+      saveValue(postBody, "postBody");
+    }
     postBody.className = "";
     postBodyMessage.innerHTML = "&nbsp;";
   } catch (err) {
@@ -163,7 +166,6 @@ sendButton.onclick = async () => {
   sendMessage.innerHTML = "&nbsp;";
   response.innerHTML = "";
   responseStatus.innerHTML = "";
-  responsePretty.style.visibility = "hidden";
   sentAt.innerHTML = nowString(1);
   recievedAt.innerHTML = "";
   try {
@@ -180,11 +182,14 @@ sendButton.onclick = async () => {
       try {
         const formatted = JSON.stringify(JSON.parse(txt), null, tabSize);
         if (formatted !== txt) {
-          responsePretty.onclick = () => {
-            responsePretty.style.visibility = "hidden";
+          if (responseFormat.checked) {
             response.innerHTML = formatted;
-          };
-          responsePretty.style.visibility = "visible";
+          } else {
+            responseFormat.onclick = () => {
+              response.innerHTML = formatted;
+              responseFormat.onclick = null;
+            };
+          }
         }
       } catch (_) {}
     } catch (err) {
@@ -227,9 +232,6 @@ root([
       responseStatus,
     ],
   }),
-  elem("div", {
-    style: { position: "relative" },
-    children: [text("Content"), response, responsePretty],
-  }),
+  group([text("Content"), text(" Autoformat ", "i"), responseFormat, response]),
   group([sendMessage, sendButton], "center"),
 ]);

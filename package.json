@@ -7,7 +7,7 @@
   "dependencies": {
     "gh-pages": "^3.1.0",
     "parcel-bundler": "^1.12.4",
-    "tyne": "^0.1.0"
+    "tyne": "^0.1.1-1"
   },
   "scripts": {
     "dev": "parcel src/index.html",
