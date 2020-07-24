@@ -1,15 +1,15 @@
 import { elem, text, group, root, keepValue, saveValue } from "tyne";
 
 const now = () => new Date().getTime();
-const nowString = (milliseconds) => {
+const nowString = (milliseconds?: boolean) => {
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, 0);
-  const day = String(date.getDate()).padStart(2, 0);
-  const hour = String(date.getHours()).padStart(2, 0);
-  const minute = String(date.getMinutes()).padStart(2, 0);
-  const second = String(date.getSeconds()).padStart(2, 0);
-  const ms = String(date.getMilliseconds()).padStart(3, 0);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+  const ms = String(date.getMilliseconds()).padStart(3, "0");
   return `${year}-${month}-${day} ${hour}:${minute}:${second}${
     milliseconds ? `.${ms}` : ""
   }`;
@@ -18,7 +18,7 @@ const nowString = (milliseconds) => {
 const currentTime = elem("code", {
   innerHTML: nowString(),
   style: {
-    background: "#fff",
+    background: "var(--background)",
     textAlign: "center",
     position: "fixed",
     top: 0,
@@ -28,12 +28,10 @@ const currentTime = elem("code", {
   },
 });
 
-const targetUrl = elem("input", {
-  type: "text",
-});
+const targetUrl = <HTMLInputElement>elem("input", { type: "text" });
 keepValue(targetUrl, "targetUrl");
 
-const requestType = elem("select", {
+const requestType = <HTMLSelectElement>elem("select", {
   children: [
     elem("option", {
       value: "get",
@@ -47,7 +45,7 @@ const requestType = elem("select", {
 });
 keepValue(requestType, "requestType");
 
-const requestCredentials = elem("select", {
+const requestCredentials = <HTMLSelectElement>elem("select", {
   children: [
     elem("option", {
       value: "omit",
@@ -65,13 +63,13 @@ const requestCredentials = elem("select", {
 });
 keepValue(requestCredentials, "requestCredentials");
 
-const postBody = elem("textarea", {
+const postBody = <HTMLTextAreaElement>elem("textarea", {
   spellcheck: false,
   disabled: requestType.value !== "post",
 });
 keepValue(postBody, "postBody");
 
-const postBodyFormat = elem("input", { type: "checkbox" });
+const postBodyFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
 keepValue(postBodyFormat, "postBodyFormat", true, "checked");
 
 const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
@@ -81,11 +79,15 @@ const recievedAt = elem("code");
 const responseSent = elem("code");
 const responseStatus = elem("code");
 
-const response = elem("textarea", { readOnly: true, spellcheck: false });
-const responseFormat = elem("input", { type: "checkbox" });
+const response = <HTMLTextAreaElement>(
+  elem("textarea", { readOnly: true, spellcheck: false })
+);
+const responseFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
 keepValue(responseFormat, "responseFormat", false, "checked");
 
-const sendButton = elem("button", { className: "big", innerHTML: "SEND" });
+const sendButton = <HTMLButtonElement>(
+  elem("button", { className: "big", innerHTML: "SEND" })
+);
 const sendMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
 requestType.addEventListener(
@@ -155,6 +157,7 @@ const formatBody = () => {
     postBodyMessage.innerHTML = String(err);
   }
 };
+
 postBody.addEventListener("blur", formatBody);
 postBodyFormat.addEventListener(
   "change",
@@ -164,29 +167,29 @@ postBodyFormat.addEventListener(
 sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
-  response.innerHTML = "";
+  response.value = "";
   responseStatus.innerHTML = "";
-  sentAt.innerHTML = nowString(1);
+  sentAt.innerHTML = nowString(true);
   recievedAt.innerHTML = "";
   try {
     const res = await fetch(targetUrl.value, {
       method: requestType.value,
-      credentials: requestCredentials.value,
+      credentials: <RequestCredentials>requestCredentials.value,
       ...(requestType.value === "post" ? { body: postBody.value } : {}),
     });
-    recievedAt.innerHTML = nowString(1);
-    responseStatus.innerHTML = res.status;
+    recievedAt.innerHTML = nowString(true);
+    responseStatus.innerHTML = String(res.status);
     try {
       const txt = await res.text();
-      response.innerHTML = txt;
+      response.value = txt;
       try {
         const formatted = JSON.stringify(JSON.parse(txt), null, tabSize);
         if (formatted !== txt) {
           if (responseFormat.checked) {
-            response.innerHTML = formatted;
+            response.value = formatted;
           } else {
             responseFormat.onclick = () => {
-              response.innerHTML = formatted;
+              response.value = formatted;
               responseFormat.onclick = null;
             };
           }

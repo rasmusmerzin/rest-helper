@@ -4,6 +4,7 @@ html {
   --submit-color: #29c;
   --error-color: #a22;
   --disabled-color: #aaa;
+  --background: #ddd;
 }
 
 * {
@@ -29,7 +30,7 @@ body {
   max-width: 80ex;
   width: 90%;
   margin: 3rem auto 4rem;
-  background: #ddd;
+  background: var(--background);
 }
 
 h1 {
