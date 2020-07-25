@@ -1,4 +1,4 @@
-import { elem, text, group, root, keepValue, saveValue } from "tyne";
+import { elem, text, select, group, root, keepValue, saveValue } from "tyne";
 
 const now = () => new Date().getTime();
 const nowString = (milliseconds?: boolean) => {
@@ -16,7 +16,7 @@ const nowString = (milliseconds?: boolean) => {
 };
 
 const currentTime = elem("code", {
-  innerHTML: nowString(),
+  innerText: nowString(),
   style: {
     background: "var(--background)",
     textAlign: "center",
@@ -31,48 +31,41 @@ const currentTime = elem("code", {
 const targetUrl = <HTMLInputElement>elem("input", { type: "text" });
 keepValue(targetUrl, "targetUrl");
 
-const requestType = <HTMLSelectElement>elem("select", {
-  children: [
-    elem("option", {
-      value: "get",
-      innerHTML: "GET",
-    }),
-    elem("option", {
-      value: "post",
-      innerHTML: "POST",
-    }),
+const requestType = select(
+  [
+    "get",
+    "head",
+    "post",
+    "put",
+    "delete",
+    "connect",
+    "options",
+    "trace",
+    "patch",
   ],
-});
+  {
+    style: { textTransform: "uppercase" },
+  }
+);
 keepValue(requestType, "requestType");
 
-const requestCredentials = <HTMLSelectElement>elem("select", {
-  children: [
-    elem("option", {
-      value: "omit",
-      innerHTML: "omit",
-    }),
-    elem("option", {
-      value: "same-origin",
-      innerHTML: "same-origin",
-    }),
-    elem("option", {
-      value: "include",
-      innerHTML: "include",
-    }),
-  ],
-});
+const requestCredentials = select(["omit", "same-origin", "include"]);
 keepValue(requestCredentials, "requestCredentials");
 
-const postBody = <HTMLTextAreaElement>elem("textarea", {
-  spellcheck: false,
-  disabled: requestType.value !== "post",
+const requestBody = <HTMLTextAreaElement>(
+  elem("textarea", { spellcheck: false })
+);
+keepValue(requestBody, "requestBody");
+
+const requestBodyFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
+keepValue(requestBodyFormat, "requestBodyFormat", true, "checked");
+
+const requestBodyNote = elem("p", { className: "italic" });
+
+const requestBodyMessage = elem("p", {
+  className: "italic",
+  innerHTML: "&nbsp;",
 });
-keepValue(postBody, "postBody");
-
-const postBodyFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
-keepValue(postBodyFormat, "postBodyFormat", true, "checked");
-
-const postBodyMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
 const sentAt = elem("code");
 const recievedAt = elem("code");
@@ -86,20 +79,15 @@ const responseFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
 keepValue(responseFormat, "responseFormat", false, "checked");
 
 const sendButton = <HTMLButtonElement>(
-  elem("button", { className: "big", innerHTML: "SEND" })
+  elem("button", { className: "big", innerText: "SEND" })
 );
 const sendMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
 
-requestType.addEventListener(
-  "change",
-  () => (postBody.disabled = requestType.value !== "post")
-);
-
 const tabSize = 2;
-postBody.addEventListener("keydown", (e) => {
-  const current = postBody.value;
-  const start = postBody.selectionStart,
-    end = postBody.selectionEnd;
+requestBody.addEventListener("keydown", (e) => {
+  const current = requestBody.value;
+  const start = requestBody.selectionStart,
+    end = requestBody.selectionEnd;
   const left = current.substring(0, start),
     right = current.substring(end);
   const rowLeft = String(left.match(/\n[^\n]*$/) || left);
@@ -111,18 +99,18 @@ postBody.addEventListener("keydown", (e) => {
         let amount = 1;
         if (rowLeft.endsWith(" ".repeat(tabSize)))
           amount = (rowLeft.length % tabSize) + 1;
-        postBody.value =
+        requestBody.value =
           prevRows + rowLeft.substring(0, rowLeft.length - amount) + right;
-        postBody.selectionStart = postBody.selectionEnd = start - amount;
-        saveValue(postBody, "postBody");
+        requestBody.selectionStart = requestBody.selectionEnd = start - amount;
+        saveValue(requestBody, "requestBody");
       }
       break;
     case "Tab":
       e.preventDefault();
       const amount = tabSize - ((rowLeft.length - 1) % tabSize);
-      postBody.value = left + " ".repeat(amount) + right;
-      postBody.selectionStart = postBody.selectionEnd = start + amount;
-      saveValue(postBody, "postBody");
+      requestBody.value = left + " ".repeat(amount) + right;
+      requestBody.selectionStart = requestBody.selectionEnd = start + amount;
+      saveValue(requestBody, "requestBody");
       break;
   }
 });
@@ -131,11 +119,11 @@ const formatBody = () => {
   try {
     let obj;
     try {
-      obj = JSON.parse(postBody.value);
+      obj = JSON.parse(requestBody.value);
     } catch (err) {
-      if (postBodyFormat.checked)
+      if (requestBodyFormat.checked)
         obj = JSON.parse(
-          postBody.value
+          requestBody.value
             .replace(/\n\s*([^"\n]*):/g, '\n"$1":')
             .replace(/:\s*'([^"\n]*[^,"\n])'(,?)\s*(\n|})/g, ': "$1"$2$3')
             .replace(
@@ -146,39 +134,39 @@ const formatBody = () => {
         );
       else throw err;
     }
-    if (obj && postBodyFormat.checked) {
-      postBody.value = JSON.stringify(obj, null, tabSize);
-      saveValue(postBody, "postBody");
+    if (obj && requestBodyFormat.checked) {
+      requestBody.value = JSON.stringify(obj, null, tabSize);
+      saveValue(requestBody, "requestBody");
     }
-    postBody.className = "";
-    postBodyMessage.innerHTML = "&nbsp;";
+    requestBody.className = "";
+    requestBodyMessage.innerHTML = "&nbsp;";
   } catch (err) {
-    postBody.className = "error";
-    postBodyMessage.innerHTML = String(err);
+    requestBody.className = "error";
+    requestBodyMessage.innerText = String(err);
   }
 };
 
-postBody.addEventListener("blur", formatBody);
-postBodyFormat.addEventListener(
+requestBody.addEventListener("blur", formatBody);
+requestBodyFormat.addEventListener(
   "change",
-  () => postBodyFormat.checked && formatBody()
+  () => requestBodyFormat.checked && formatBody()
 );
 
 sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
   response.value = "";
-  responseStatus.innerHTML = "";
-  sentAt.innerHTML = nowString(true);
-  recievedAt.innerHTML = "";
+  responseStatus.innerText = "";
+  sentAt.innerText = nowString(true);
+  recievedAt.innerText = "";
   try {
     const res = await fetch(targetUrl.value, {
       method: requestType.value,
       credentials: <RequestCredentials>requestCredentials.value,
-      ...(requestType.value === "post" ? { body: postBody.value } : {}),
+      ...(requestType.value === "post" ? { body: requestBody.value } : {}),
     });
-    recievedAt.innerHTML = nowString(true);
-    responseStatus.innerHTML = String(res.status);
+    recievedAt.innerText = nowString(true);
+    responseStatus.innerText = String(res.status);
     try {
       const txt = await res.text();
       response.value = txt;
@@ -196,15 +184,33 @@ sendButton.onclick = async () => {
         }
       } catch (_) {}
     } catch (err) {
-      sendMessage.innerHTML = String(err);
+      sendMessage.innerText = String(err);
     }
   } catch (err) {
-    sendMessage.innerHTML = String(err);
+    sendMessage.innerText = String(err);
   }
   sendButton.disabled = false;
 };
 
-setInterval(() => (currentTime.innerHTML = nowString()), 1000);
+setInterval(() => (currentTime.innerText = nowString()), 1000);
+
+const updateRequestBodyNote = () => {
+  switch (requestType.value) {
+    case "get":
+    case "head":
+      requestBodyNote.innerHTML = `Note: According to <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters">MDN web docs</a> GET or HEAD method cannot have a body.`;
+      break;
+    case "trace":
+      requestBodyNote.innerHTML = `Note: According to <a href="https://tools.ietf.org/html/rfc2616#section-9.8">RFC2616</a> A TRACE request MUST NOT include an entity.`;
+      break;
+      break;
+    default:
+      requestBodyNote.innerText = "";
+  }
+};
+
+updateRequestBodyNote();
+requestType.addEventListener("change", updateRequestBodyNote);
 
 root([
   currentTime,
@@ -215,9 +221,10 @@ root([
   group([
     text("Body"),
     text(" Autoformat ", "i"),
-    postBodyFormat,
-    postBody,
-    postBodyMessage,
+    requestBodyFormat,
+    requestBody,
+    requestBodyNote,
+    requestBodyMessage,
   ]),
   text("Response", "h2"),
   elem("div", {
