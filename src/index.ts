@@ -60,6 +60,11 @@ keepValue(requestBody, "requestBody");
 const requestBodyFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
 keepValue(requestBodyFormat, "requestBodyFormat", true, "checked");
 
+const requestBodyEnabled = <HTMLInputElement>(
+  elem("input", { type: "checkbox" })
+);
+keepValue(requestBodyEnabled, "requestBodyEnabled", false, "checked");
+
 const requestBodyNote = elem("p", { className: "italic" });
 
 const requestBodyMessage = elem("p", {
@@ -152,6 +157,12 @@ requestBodyFormat.addEventListener(
   () => requestBodyFormat.checked && formatBody()
 );
 
+const updateBodyEnabled = () => {
+  requestBody.disabled = !requestBodyEnabled.checked;
+};
+updateBodyEnabled();
+requestBodyEnabled.addEventListener("change", updateBodyEnabled);
+
 sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
@@ -163,7 +174,7 @@ sendButton.onclick = async () => {
     const res = await fetch(targetUrl.value, {
       method: requestType.value,
       credentials: <RequestCredentials>requestCredentials.value,
-      ...(requestType.value === "post" ? { body: requestBody.value } : {}),
+      ...(requestBodyEnabled.checked ? { body: requestBody.value } : {}),
     });
     recievedAt.innerText = nowString(true);
     responseStatus.innerText = String(res.status);
@@ -195,22 +206,24 @@ sendButton.onclick = async () => {
 setInterval(() => (currentTime.innerText = nowString()), 1000);
 
 const updateRequestBodyNote = () => {
-  switch (requestType.value) {
-    case "get":
-    case "head":
-      requestBodyNote.innerHTML = `Note: According to <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters">MDN web docs</a> GET or HEAD method cannot have a body.`;
-      break;
-    case "trace":
-      requestBodyNote.innerHTML = `Note: According to <a href="https://tools.ietf.org/html/rfc2616#section-9.8">RFC2616</a> A TRACE request MUST NOT include an entity.`;
-      break;
-      break;
-    default:
-      requestBodyNote.innerText = "";
-  }
+  if (requestBodyEnabled.checked) {
+    switch (requestType.value) {
+      case "get":
+      case "head":
+        requestBodyNote.innerHTML = `Note: According to <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters">MDN web docs</a> GET or HEAD method cannot have a body.`;
+        break;
+      case "trace":
+        requestBodyNote.innerHTML = `Note: According to <a href="https://tools.ietf.org/html/rfc2616#section-9.8">RFC2616</a> A TRACE request MUST NOT include an entity.`;
+        break;
+        break;
+      default:
+        requestBodyNote.innerText = "";
+    }
+  } else requestBodyNote.innerText = "";
 };
-
 updateRequestBodyNote();
 requestType.addEventListener("change", updateRequestBodyNote);
+requestBodyEnabled.addEventListener("change", updateRequestBodyNote);
 
 root([
   currentTime,
@@ -222,6 +235,8 @@ root([
     text("Body"),
     text(" Autoformat ", "i"),
     requestBodyFormat,
+    text(" Enabled ", "i"),
+    requestBodyEnabled,
     requestBody,
     requestBodyNote,
     requestBodyMessage,

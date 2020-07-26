@@ -86,14 +86,12 @@ input.error {
   border-color: var(--error-color);
 }
 
-*:disabled {
-  color: var(--disabled-color);
-}
-
 textarea:disabled,
 input:disabled,
 button:disabled {
+  color: var(--disabled-color);
   border-color: var(--disabled-color);
+  background: none;
 }
 
 button:disabled {
