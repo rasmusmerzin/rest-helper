@@ -29,8 +29,6 @@ const currentTime = elem("code", {
 });
 
 const targetUrl = <HTMLInputElement>elem("input", { type: "text" });
-keepValue(targetUrl, "targetUrl");
-
 const requestType = select(
   [
     "get",
@@ -47,26 +45,16 @@ const requestType = select(
     style: { textTransform: "uppercase" },
   }
 );
-keepValue(requestType, "requestType");
-
+const requestMode = select(["cors", "no-cors", "same-origin"]);
 const requestCredentials = select(["omit", "same-origin", "include"]);
-keepValue(requestCredentials, "requestCredentials");
-
 const requestBody = <HTMLTextAreaElement>(
   elem("textarea", { spellcheck: false })
 );
-keepValue(requestBody, "requestBody");
-
 const requestBodyFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
-keepValue(requestBodyFormat, "requestBodyFormat", true, "checked");
-
 const requestBodyEnabled = <HTMLInputElement>(
   elem("input", { type: "checkbox" })
 );
-keepValue(requestBodyEnabled, "requestBodyEnabled", false, "checked");
-
 const requestBodyNote = elem("p", { className: "italic" });
-
 const requestBodyMessage = elem("p", {
   className: "italic",
   innerHTML: "&nbsp;",
@@ -76,17 +64,24 @@ const sentAt = elem("code");
 const recievedAt = elem("code");
 const responseSent = elem("code");
 const responseStatus = elem("code");
-
 const response = <HTMLTextAreaElement>(
   elem("textarea", { readOnly: true, spellcheck: false })
 );
 const responseFormat = <HTMLInputElement>elem("input", { type: "checkbox" });
-keepValue(responseFormat, "responseFormat", false, "checked");
-
 const sendButton = <HTMLButtonElement>(
   elem("button", { className: "big", innerText: "SEND" })
 );
 const sendMessage = elem("p", { className: "italic", innerHTML: "&nbsp;" });
+
+keepValue(targetUrl, "targetUrl");
+keepValue(requestType, "requestType");
+keepValue(requestCredentials, "requestCredentials");
+keepValue(requestBody, "requestBody");
+keepValue(requestBodyFormat, "requestBodyFormat", true, "checked");
+keepValue(requestBodyEnabled, "requestBodyEnabled", false, "checked");
+keepValue(responseFormat, "responseFormat", false, "checked");
+
+setInterval(() => (currentTime.innerText = nowString()), 1000);
 
 const tabSize = 2;
 requestBody.addEventListener("keydown", (e) => {
@@ -163,6 +158,14 @@ const updateBodyEnabled = () => {
 updateBodyEnabled();
 requestBodyEnabled.addEventListener("change", updateBodyEnabled);
 
+const createFetchInit = (): RequestInit => {
+  return {
+    method: requestType.value,
+    mode: <RequestMode>requestMode.value,
+    credentials: <RequestCredentials>requestCredentials.value,
+    ...(requestBodyEnabled.checked ? { body: requestBody.value } : {}),
+  };
+};
 sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
@@ -171,11 +174,7 @@ sendButton.onclick = async () => {
   sentAt.innerText = nowString(true);
   recievedAt.innerText = "";
   try {
-    const res = await fetch(targetUrl.value, {
-      method: requestType.value,
-      credentials: <RequestCredentials>requestCredentials.value,
-      ...(requestBodyEnabled.checked ? { body: requestBody.value } : {}),
-    });
+    const res = await fetch(targetUrl.value, createFetchInit());
     recievedAt.innerText = nowString(true);
     responseStatus.innerText = String(res.status);
     try {
@@ -203,8 +202,6 @@ sendButton.onclick = async () => {
   sendButton.disabled = false;
 };
 
-setInterval(() => (currentTime.innerText = nowString()), 1000);
-
 const updateRequestBodyNote = () => {
   if (requestBodyEnabled.checked) {
     switch (requestType.value) {
@@ -230,6 +227,7 @@ root([
   text("Request", "h2"),
   group([text("URL"), targetUrl]),
   group([text("Type"), requestType]),
+  group([text("Mode"), requestMode]),
   group([text("Credentials"), requestCredentials]),
   group([
     text("Body"),
