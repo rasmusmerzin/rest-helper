@@ -181,7 +181,6 @@ const loadFromInit = (init: RequestInit) => {
   if (init.body !== undefined) requestBody.value = String(init.body);
 };
 
-let historyFeedOpen = false;
 const historyFeed = elem("div", {
   id: "history-feed",
   children: [
@@ -189,8 +188,7 @@ const historyFeed = elem("div", {
       className: "big",
       innerText: "≡",
       onclick: () => {
-        historyFeedOpen = !historyFeedOpen;
-        toggleClass(historyFeed, "open", historyFeedOpen);
+        toggleClass(historyFeed, "open");
       },
     }),
   ],
@@ -217,16 +215,17 @@ const historyElemMap = new ElemMap(
         onclick: () => {
           targetUrl.value = req.resource;
           loadFromInit(req.init);
-          if (window.innerWidth < 1300) {
-            historyFeedOpen = false;
-            toggleClass(historyFeed, "open", false);
-          }
+          if (window.innerWidth < 1300) toggleClass(historyFeed, "open", false);
         },
       }),
     ]),
   (req, i) => ({ ...req, i })
 );
 historyElemMap.update(requestHistory.getHistory());
+document.addEventListener(
+  "keydown",
+  (e) => e.key === "Escape" && toggleClass(historyFeed, "open", false)
+);
 
 sendButton.onclick = async () => {
   sendButton.disabled = true;
