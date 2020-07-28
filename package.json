@@ -1,7 +1,6 @@
 {
   "name": "rest-helper",
   "version": "1.0.0",
-  "repository": "https://github.com/rasmusmerzin/rest-helper",
   "author": "rasmusmerzin <rasmusmerzin@gmail.com>",
   "license": "MIT",
   "dependencies": {
