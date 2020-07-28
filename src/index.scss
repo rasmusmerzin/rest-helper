@@ -1,0 +1,188 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Mono&family=Fira+Sans:ital,wght@0,400;0,700;1,300&display=swap");
+
+html {
+  --submit-color: #29c;
+  --error-color: #a22;
+  --disabled-color: #aaa;
+  --background: #ddd;
+}
+
+* {
+  font-family: "Fira Sans", sans-serif;
+  box-sizing: border-box;
+  line-height: 1.1em;
+}
+
+code,
+input[type="text"],
+textarea {
+  padding: 0.2rem;
+  line-height: 1.1em;
+  font-family: "Fira Mono", monospace;
+}
+
+body {
+  max-width: 80ex;
+  width: 90%;
+  margin: 3rem auto 4rem;
+  background: var(--background);
+
+  > div {
+    margin: 1rem 0;
+  }
+}
+
+code {
+  line-height: 1.1rem;
+  font-size: 0.9rem;
+}
+
+label {
+  margin: 0.2rem 0;
+  display: inline-block;
+  margin-right: 1ex;
+}
+
+h1 {
+  text-align: center;
+}
+
+.italic {
+  font-style: italic;
+}
+
+select,
+option {
+  cursor: pointer;
+}
+
+textarea {
+  resize: vertical;
+  height: 10rem;
+}
+
+textarea,
+input[type="text"] {
+  width: 100%;
+}
+
+textarea,
+input,
+button,
+option {
+  margin: 0;
+  border: 1px solid #000;
+  border-radius: 0.2rem;
+}
+
+textarea,
+input,
+button {
+  &.error {
+    border-width: 2px;
+    border-color: var(--error-color);
+  }
+
+  &:disabled {
+    color: var(--disabled-color);
+    border-color: var(--disabled-color);
+    background: none;
+  }
+}
+
+button {
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  color: #fff;
+  background: var(--submit-color);
+  border-color: var(--submit-color);
+
+  &:hover {
+    color: var(--submit-color);
+    background: #fff;
+    border-color: var(--submit-color);
+  }
+
+  &.small {
+    font-size: 0.7rem;
+  }
+
+  &.big {
+    font-size: 1.2rem;
+  }
+
+  &:disabled {
+    color: #fff;
+    background: var(--disabled-color);
+  }
+
+  &.alert {
+    --submit-color: #c55;
+  }
+
+  &.clear {
+    padding: 0;
+    background: none;
+    border: none;
+    color: #000;
+    text-align: left;
+
+    &:hover {
+      text-shadow: 0 0 0.1rem #0008;
+    }
+  }
+}
+
+#current-time {
+  background: var(--background);
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9;
+}
+
+#history-feed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  margin: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  > button {
+    border-radius: 0;
+    width: 100%;
+  }
+
+  > .list {
+    display: none;
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+  }
+
+  &.open {
+    min-width: 18rem;
+    max-width: 50%;
+    background: var(--background);
+    box-shadow: 0 0 0.3rem #0006;
+
+    > .list {
+      $gap: 0.4rem;
+      display: grid;
+      align-content: start;
+      padding: $gap;
+      grid-gap: $gap;
+
+      > div {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-gap: $gap;
+      }
+    }
+  }
+}

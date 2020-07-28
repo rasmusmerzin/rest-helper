@@ -1,4 +1,17 @@
-import { elem, text, select, group, root, keepValue, saveValue } from "tyne";
+import {
+  elem,
+  text,
+  select,
+  group,
+  root,
+  keepValue,
+  saveValue,
+  toggleClass,
+  ElemMap,
+} from "tyne";
+import RequestHistory from "./RequestHistory";
+
+const requestHistory = new RequestHistory();
 
 const now = () => new Date().getTime();
 const nowString = (milliseconds?: boolean) => {
@@ -14,19 +27,6 @@ const nowString = (milliseconds?: boolean) => {
     milliseconds ? `.${ms}` : ""
   }`;
 };
-
-const currentTime = elem("code", {
-  innerText: nowString(),
-  style: {
-    background: "var(--background)",
-    textAlign: "center",
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    zIndex: 9,
-  },
-});
 
 const targetUrl = <HTMLInputElement>elem("input", { type: "text" });
 const requestType = select(
@@ -80,6 +80,11 @@ keepValue(requestBody, "requestBody");
 keepValue(requestBodyFormat, "requestBodyFormat", true, "checked");
 keepValue(requestBodyEnabled, "requestBodyEnabled", false, "checked");
 keepValue(responseFormat, "responseFormat", false, "checked");
+
+const currentTime = elem("code", {
+  id: "current-time",
+  innerText: nowString(),
+});
 
 setInterval(() => (currentTime.innerText = nowString()), 1000);
 
@@ -166,6 +171,63 @@ const createFetchInit = (): RequestInit => {
     ...(requestBodyEnabled.checked ? { body: requestBody.value } : {}),
   };
 };
+
+const loadFromInit = (init: RequestInit) => {
+  requestType.value = init.method;
+  requestMode.value = init.mode;
+  requestCredentials.value = init.credentials;
+  requestBodyEnabled.checked = init.body !== undefined;
+  updateBodyEnabled();
+  if (init.body !== undefined) requestBody.value = String(init.body);
+};
+
+let historyFeedOpen = false;
+const historyFeed = elem("div", {
+  id: "history-feed",
+  children: [
+    elem("button", {
+      className: "big",
+      innerText: "≡",
+      onclick: () => {
+        historyFeedOpen = !historyFeedOpen;
+        toggleClass(historyFeed, "open", historyFeedOpen);
+      },
+    }),
+  ],
+});
+const historyFeedList = elem("div", { className: "list" }, historyFeed);
+const historyElemMap = new ElemMap(
+  historyFeedList,
+  (req, i) =>
+    group([
+      elem("button", {
+        innerText: "X",
+        className: "small alert",
+        onclick: () => {
+          requestHistory.remove(i);
+          historyElemMap.update(requestHistory.getHistory());
+        },
+      }),
+      elem("button", {
+        className: "clear",
+        children: [
+          text(`[${req.init.method.toUpperCase()}] `, "b"),
+          text(req.resource),
+        ],
+        onclick: () => {
+          targetUrl.value = req.resource;
+          loadFromInit(req.init);
+          if (window.innerWidth < 1300) {
+            historyFeedOpen = false;
+            toggleClass(historyFeed, "open", false);
+          }
+        },
+      }),
+    ]),
+  (req, i) => ({ ...req, i })
+);
+historyElemMap.update(requestHistory.getHistory());
+
 sendButton.onclick = async () => {
   sendButton.disabled = true;
   sendMessage.innerHTML = "&nbsp;";
@@ -173,24 +235,31 @@ sendButton.onclick = async () => {
   responseStatus.innerText = "";
   sentAt.innerText = nowString(true);
   recievedAt.innerText = "";
+
   try {
-    const res = await fetch(targetUrl.value, createFetchInit());
+    const resource = targetUrl.value;
+    const init = createFetchInit();
+
+    const res = await fetch(resource, init);
+    requestHistory.add(resource, init);
+    historyElemMap.update(requestHistory.getHistory());
+
     recievedAt.innerText = nowString(true);
     responseStatus.innerText = String(res.status);
+
     try {
       const txt = await res.text();
       response.value = txt;
+
       try {
         const formatted = JSON.stringify(JSON.parse(txt), null, tabSize);
         if (formatted !== txt) {
-          if (responseFormat.checked) {
-            response.value = formatted;
-          } else {
+          if (responseFormat.checked) response.value = formatted;
+          else
             responseFormat.onclick = () => {
               response.value = formatted;
               responseFormat.onclick = null;
             };
-          }
         }
       } catch (_) {}
     } catch (err) {
@@ -205,32 +274,29 @@ sendButton.onclick = async () => {
 const updateRequestBodyNote = () => {
   if (requestBodyEnabled.checked) {
     switch (requestType.value) {
-      case "get":
-      case "head":
-        requestBodyNote.innerHTML = `Note: According to <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters">MDN web docs</a> GET or HEAD method cannot have a body.`;
-        break;
       case "trace":
         requestBodyNote.innerHTML = `Note: According to <a href="https://tools.ietf.org/html/rfc2616#section-9.8">RFC2616</a> A TRACE request MUST NOT include an entity.`;
-        break;
         break;
       default:
         requestBodyNote.innerText = "";
     }
   } else requestBodyNote.innerText = "";
 };
+
 updateRequestBodyNote();
 requestType.addEventListener("change", updateRequestBodyNote);
 requestBodyEnabled.addEventListener("change", updateRequestBodyNote);
 
 root([
   currentTime,
+  historyFeed,
   text("Request", "h2"),
-  group([text("URL"), targetUrl]),
-  group([text("Type"), requestType]),
-  group([text("Mode"), requestMode]),
-  group([text("Credentials"), requestCredentials]),
+  group([text("URL", "label"), targetUrl]),
+  group([text("Type", "label"), requestType]),
+  group([text("Mode", "label"), requestMode]),
+  group([text("Credentials", "label"), requestCredentials]),
   group([
-    text("Body"),
+    text("Body", "label"),
     text(" Autoformat ", "i"),
     requestBodyFormat,
     text(" Enabled ", "i"),
@@ -247,14 +313,19 @@ root([
       alignItems: "center",
     },
     children: [
-      text("Sent"),
+      text("Sent", "label"),
       sentAt,
-      text("Recieved"),
+      text("Recieved", "label"),
       recievedAt,
-      text("Status"),
+      text("Status", "label"),
       responseStatus,
     ],
   }),
-  group([text("Content"), text(" Autoformat ", "i"), responseFormat, response]),
+  group([
+    text("Content", "label"),
+    text(" Autoformat ", "i"),
+    responseFormat,
+    response,
+  ]),
   group([sendMessage, sendButton], "center"),
 ]);
