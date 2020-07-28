@@ -99,7 +99,7 @@ requestBody.addEventListener("keydown", (e) => {
   const prevRows = left.substring(0, left.length - rowLeft.length) || "";
   switch (e.key) {
     case "Backspace":
-      if (rowLeft.length > 0) {
+      if (rowLeft.length > 0 && start === end) {
         e.preventDefault();
         let amount = 1;
         if (rowLeft.endsWith(" ".repeat(tabSize)))
