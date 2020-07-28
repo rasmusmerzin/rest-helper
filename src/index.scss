@@ -1,11 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Fira+Mono&family=Fira+Sans:ital,wght@0,400;0,700;1,300&display=swap");
 
-html {
-  --submit-color: #29c;
-  --error-color: #a22;
-  --disabled-color: #aaa;
-  --background: #ddd;
-}
+$submit-color: #29c;
+$error-color: complement($submit-color);
+$disabled-color: #aaa;
+$background: #ddd;
 
 * {
   font-family: "Fira Sans", sans-serif;
@@ -25,7 +23,7 @@ body {
   max-width: 80ex;
   width: 90%;
   margin: 3rem auto 4rem;
-  background: var(--background);
+  background: $background;
 
   > div {
     margin: 1rem 0;
@@ -80,12 +78,12 @@ input,
 button {
   &.error {
     border-width: 2px;
-    border-color: var(--error-color);
+    border-color: $error-color;
   }
 
   &:disabled {
-    color: var(--disabled-color);
-    border-color: var(--disabled-color);
+    color: $disabled-color;
+    border-color: $disabled-color;
     background: none;
   }
 }
@@ -94,13 +92,22 @@ button {
   padding: 0.3em 0.5em;
   cursor: pointer;
   color: #fff;
-  background: var(--submit-color);
-  border-color: var(--submit-color);
+  background: $submit-color;
+  border-color: $submit-color;
 
   &:hover {
-    color: var(--submit-color);
+    color: $submit-color;
     background: #fff;
-    border-color: var(--submit-color);
+    border-color: $submit-color;
+  }
+
+  &.alert {
+    background: $error-color;
+    border-color: $error-color;
+    &:hover {
+      color: $error-color;
+      border-color: $error-color;
+    }
   }
 
   &.small {
@@ -113,11 +120,7 @@ button {
 
   &:disabled {
     color: #fff;
-    background: var(--disabled-color);
-  }
-
-  &.alert {
-    --submit-color: #c55;
+    background: $disabled-color;
   }
 
   &.clear {
@@ -133,8 +136,17 @@ button {
   }
 }
 
+%topbar {
+  height: 2rem;
+  line-height: 2rem;
+  padding-top: 0;
+  vertical-align: middle;
+}
+
 #current-time {
-  background: var(--background);
+  @extend %topbar;
+
+  background: darken($background, 10%);
   text-align: center;
   position: fixed;
   top: 0;
@@ -154,6 +166,8 @@ button {
   grid-template-rows: auto 1fr;
 
   > button {
+    @extend %topbar;
+
     border-radius: 0;
     width: 100%;
   }
@@ -167,15 +181,17 @@ button {
 
   &.open {
     min-width: 18rem;
-    max-width: 50%;
-    background: var(--background);
+    max-width: 80%;
+    background: $background;
     box-shadow: 0 0 0.3rem #0006;
 
     > .list {
       $gap: 0.4rem;
+
       display: grid;
       align-content: start;
       padding: $gap;
+      padding-right: #{$gap * 2};
       grid-gap: $gap;
 
       > div {
